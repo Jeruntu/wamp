@@ -32,6 +32,11 @@ public:
     Q_INVOKABLE QString toString() const;
 private:
     QExplicitlySharedDataPointer<WampErrorPrivate> d;
+	
 };
+	
 }
+using namespace QFlow;
+Q_DECLARE_METATYPE(WampError)
+
 #endif // WAMPERROR_H

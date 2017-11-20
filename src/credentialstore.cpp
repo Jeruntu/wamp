@@ -61,6 +61,10 @@ QString CredentialStore::readPassword(QUrl resource)
     g_list_free_full (items, g_object_unref);
     return QString(arr);
 #endif
+#ifdef Q_OS_MACOS
+	Q_UNUSED(resource);
+	return QString(); // no implementation, just return nothing
+#endif
 }
 QString CredentialStore::readUsername(QUrl resource)
 {
@@ -81,6 +85,10 @@ QString CredentialStore::readUsername(QUrl resource)
     g_hash_table_unref (attributes);
     g_list_free_full (items, g_object_unref);
     return user;
+#endif
+#ifdef Q_OS_MACOS
+	Q_UNUSED(resource);
+	return QString(); // no implementation, just return nothing
 #endif
 }
 }

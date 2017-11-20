@@ -85,7 +85,7 @@ bool SIDUser::checkTokenMembership(QVariant handle)
     b = CheckTokenMembership(accessHandle, d->_sid, &isMember);
     return isMember;
 #endif
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) | defined(Q_OS_MACOS)
     Q_UNUSED(handle);
     throw "not implemented";
     return false;

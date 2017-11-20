@@ -123,7 +123,7 @@ QByteArray GSSAPIUser::response(QByteArray challenge)
     QByteArray token((const char *)d->_outSecBuf.pvBuffer, d->_outSecBuf.cbBuffer);
     return token;
 #endif
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) | defined(Q_OS_MACOS)
     Q_UNUSED(challenge);
     throw "not implemented";
     return QByteArray();

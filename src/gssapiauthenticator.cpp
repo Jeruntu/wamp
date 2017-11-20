@@ -118,7 +118,7 @@ AUTH_RESULT GSSAPISession::authenticate()
 
     return AUTH_RESULT::REJECTED;
 #endif
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) | defined(Q_OS_MACOS)
     throw "not implemented";
     return AUTH_RESULT::REJECTED;
 #endif
@@ -128,7 +128,7 @@ QVariant GSSAPISession::securityToken() const
 #ifdef Q_OS_WIN
     return QVariant::fromValue<void*>(_secToken);
 #endif
-#ifdef Q_OS_UNIX
+#if defined(Q_OS_LINUX) | defined(Q_OS_MACOS) | defined(Q_OS_UNIX)
     throw "not implemented";
     return QVariant();
 #endif
