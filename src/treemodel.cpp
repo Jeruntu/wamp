@@ -51,6 +51,7 @@ void TreeModel::registrationDeleted(double, QVariantMap args)
     TreeItem* parent = toRemove->parent();
     QModelIndex parentIndex = createIndex(parent->index(), 0, parent);
     int rows = rowCount(parentIndex);
+	Q_UNUSED(rows);
     int row = toRemove->index();
     beginRemoveRows(parentIndex, row, row);
     _rootItem->remove(uri);

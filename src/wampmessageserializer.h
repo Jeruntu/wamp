@@ -22,8 +22,8 @@ class JsonMessageSerializer : public WampMessageSerializer
 public:
     explicit JsonMessageSerializer(QObject* parent = NULL);
     virtual ~JsonMessageSerializer();
-    QByteArray serialize(const QVariantList& arr);
-    QVariantList deserialize(const QByteArray& message);
+    QByteArray serialize(const QVariantList& arr) override;
+    QVariantList deserialize(const QByteArray& message) override;
 };
 
 class MsgpackMessageSerializer : public WampMessageSerializer
@@ -31,8 +31,8 @@ class MsgpackMessageSerializer : public WampMessageSerializer
 public:
     explicit MsgpackMessageSerializer(QObject* parent = NULL);
     virtual ~MsgpackMessageSerializer();
-    QByteArray serialize(const QVariantList& arr);
-    QVariantList deserialize(const QByteArray& message);
+    QByteArray serialize(const QVariantList& arr) override;
+    QVariantList deserialize(const QByteArray& message) override;
     bool isBinary() const Q_DECL_OVERRIDE;
 };
 }

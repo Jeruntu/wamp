@@ -16,10 +16,10 @@ class WAMP_EXPORT WampCraAuthenticator : public Authenticator
 public:
     explicit WampCraAuthenticator(QObject *parent = 0);
     ~WampCraAuthenticator();
-    QVariantMap generateChallenge(qulonglong sessionId, QString authId);
-    QString authMethod() const;
+    QVariantMap generateChallenge(qulonglong sessionId, QString authId) override;
+    QString authMethod() const override;
     AuthSession* createSession() const override;
-    User* getUser(AuthSession* session);
+    User* getUser(AuthSession* session) override;
 Q_SIGNALS:
 
 public Q_SLOTS:
