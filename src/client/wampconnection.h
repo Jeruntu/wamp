@@ -46,7 +46,7 @@ public:
     }
     void unregister(qulonglong registrationId);
     void unsubscribe(qulonglong subscriptionId);
-    Future call2(QString uri, const QVariantList& args, ResultCallback callback = nullptr);
+    Future call2(QString uri, const QVariantList& args, ResultCallback callback = nullptr, QVariantMap options = QVariantMap());
 public Q_SLOTS:
     void connect();
     void subscribe(QString uri, QJSValue callback);
@@ -58,8 +58,8 @@ public Q_SLOTS:
     Future getSubscription(qulonglong subscriptionId);
     Future subscribersCount(QString topicUri, ResultCallback callback = nullptr);
     void publish(QString uri, const QVariantList& args);
-    Future call(QString uri, const QVariantList& args, const QJSValue& callback = QJSValue());
-    Future call(QString uri, const QVariantList& args, QObject* callbackObj, QString callbackMethod);
+    Future call(QString uri, const QVariantList& args, const QJSValue& callback = QJSValue(), QVariantMap options = QVariantMap());
+    Future call(QString uri, const QVariantList& args, QObject* callbackObj, QString callbackMethod, QVariantMap options = QVariantMap());
     void define(QString uri, QString definition);
     Future describe(QString uri);
 Q_SIGNALS:

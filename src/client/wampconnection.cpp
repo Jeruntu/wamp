@@ -18,7 +18,7 @@
 
 namespace QFlow{
 
-WampConnectionPrivate::WampConnectionPrivate(WampConnection* parent) : QObject(), q_ptr(parent)
+WampConnectionPrivate::WampConnectionPrivate(WampConnection* parent) : QObject(), _user(nullptr), q_ptr(parent)
 {
     _worker = new WampWorker();
     _worker->_socketPrivate = this;
@@ -154,11 +154,11 @@ void WampConnection::setRealm(QString realm)
 }
 User* WampConnection::user() const
 {
-    return d_ptr->_user;
+    return d_ptr->_user.data();
 }
 void WampConnection::setUser(User* value)
 {
-    d_ptr->_user = value;
+    d_ptr->_user.reset(value);
     Q_EMIT userChanged();
 }
 
@@ -217,31 +217,31 @@ void WampConnection::subscribe(QString uri, QObject *obj, QString method)
     SubscriptionPointer sub(new MethodSubscription(uri, obj, method));
     d_ptr->addSubscription(sub);
 }
-void WampConnectionPrivate::call(QString uri, const QVariantList &args, CallPointer call)
+void WampConnectionPrivate::call(QString uri, const QVariantList &args, CallPointer call, QVariantMap options)
 {
     qulonglong requestId = Random::generate();
-    QVariantList arr{(int)WampMsgCode::CALL, requestId, QVariantMap(), uri, args};
+    QVariantList arr{(int)WampMsgCode::CALL, requestId, options, uri, args};
     _pendingCalls[requestId] = call;
     sendWampMessage(arr);
 }
 
-Future WampConnection::call(QString uri, const QVariantList& args, const QJSValue& callback)
+Future WampConnection::call(QString uri, const QVariantList& args, const QJSValue& callback, QVariantMap options)
 {
     Impl* impl = NULL;
     if(callback.isCallable()) impl = new JSImpl(callback);
     CallPointer call(new Call(impl, this), CallDeleter());
-    d_ptr->call(uri, args, call);
+    d_ptr->call(uri, args, call, options);
     return call->getFuture();
 }
-Future WampConnection::call(QString uri, const QVariantList &args, QObject *callbackObj, QString callbackMethod)
+Future WampConnection::call(QString uri, const QVariantList &args, QObject *callbackObj, QString callbackMethod, QVariantMap options)
 {
     Impl* impl = new MethodImpl(callbackObj, callbackMethod);
     CallPointer call(new Call(impl), CallDeleter());
-    d_ptr->call(uri, args, call);
+    d_ptr->call(uri, args, call, options);
     return call->getFuture();
 }
 
-Future WampConnection::call2(QString uri, const QVariantList& args, ResultCallback callback)
+Future WampConnection::call2(QString uri, const QVariantList& args, ResultCallback callback, QVariantMap options)
 {
     Impl* impl = NULL;
     if(callback)
@@ -250,7 +250,7 @@ Future WampConnection::call2(QString uri, const QVariantList& args, ResultCallba
         impl = new FunctorImpl(functor);
     }
     CallPointer call(new Call(impl), CallDeleter());
-    d_ptr->call(uri, args, call);
+    d_ptr->call(uri, args, call, options);
     return call->getFuture();
 }
 

@@ -48,8 +48,8 @@ public:
     WampConnectionPrivate(WampConnection* parent);
     ~WampConnectionPrivate();
     QUrl _url;
-    QString _realm;
-    User* _user;
+    QString _realm;	
+	QScopedPointer<User> _user;
     QThread _workerThread;
     WampWorker* _worker;
     QScopedPointer<WampMessageSerializer> _serializer;
@@ -67,7 +67,7 @@ public:
 
     void addRegistration(RegistrationPointer reg);
     void addSubscription(SubscriptionPointer sub);
-
+	
     static QByteArray PBKDF2(QString password, QString salt, int iterations);
     static QByteArray IntToOctet(int i);
     void onConnected();
@@ -75,11 +75,13 @@ public Q_SLOTS:
     void handleInvocation(WampInvocationPointer invocation);
     void handleEvent(const Event& event);
     void sendWampMessage(const QVariantList& arr);
-    void call(QString uri, const QVariantList& args, CallPointer call);
+    void call(QString uri, const QVariantList& args, CallPointer call, QVariantMap options);
 private:
     WampConnection* q_ptr;
     Q_DECLARE_PUBLIC(WampConnection)
 };
 }
+using namespace QFlow;
+Q_DECLARE_METATYPE(Event)
 #endif // WAMPCONNECTION_P_H
 

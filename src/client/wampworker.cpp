@@ -70,18 +70,24 @@ void WampWorker::opened()
     QString sub = _socket->subprotocol();
     _socketPrivate->_serializer.reset(WampMessageSerializer::create(sub));
     QVariantMap options;
-    if(!_socketPrivate->_user)
+	CredentialStore store;
+	
+    if (_socketPrivate->_user.isNull())
     {
-        CredentialStore store;
-        _socketPrivate->_user = new WampCraUser(_socketPrivate->q_ptr);
+        _socketPrivate->_user.reset(new WampCraUser());
         _socketPrivate->_user->setName(store.readUsername(_socketPrivate->_url));
     }
-    if(_socketPrivate->_user)
+	
+	QVariantList authMethods;
+	if(!_socketPrivate->_user->name().isEmpty())
     {
         options["authid"] = _socketPrivate->_user->name();
+		authMethods.append(_socketPrivate->_user->authMethod());
     }
-    QVariantList authMethods{_socketPrivate->_user->authMethod()};
-    options["authmethods"] = authMethods;
+	authMethods.append("anonymous");
+	options["authmethods"] = authMethods;
+	
+	
     QVariantMap roles{{"publisher", QVariantMap()}, {"subscriber", QVariantMap()}, {"caller", QVariantMap()}, {"callee", QVariantMap()}};
     options["roles"] = roles;
     QVariantList arr{WampMsgCode::HELLO, _socketPrivate->_realm, options};

@@ -26,6 +26,7 @@ public:
 };
 typedef QSharedPointer<WampInvocation> WampInvocationPointer;
 }
-Q_DECLARE_METATYPE(QFlow::WampInvocationPointer)
+using namespace QFlow;
+Q_DECLARE_METATYPE(WampInvocationPointer)
 #endif // WAMPINVOCATION
 
