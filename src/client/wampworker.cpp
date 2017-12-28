@@ -48,7 +48,7 @@ WampWorker::~WampWorker()
 
 void WampWorker::reconnect()
 {
-    if (!_socket.isNull() && (_socket->state() == QAbstractSocket::ConnectedState ||  _socket->state() == QAbstractSocket::ConnectingState))
+    if (!_socket.isNull())
     {
         _socket->close();
         connect();
