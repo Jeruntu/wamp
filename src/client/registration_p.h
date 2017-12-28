@@ -17,7 +17,7 @@
 
 namespace QFlow{
 
-class WampResult
+	class WampResult : public QObject
 {
     Q_GADGET
     Q_PROPERTY(QVariant resultData READ resultData)
@@ -62,7 +62,7 @@ public:
         return _resultData.isNull();
     }
 };
-class Impl
+class Impl : public QObject
 {
 public:
     virtual WampResult execute(const QVariantList& args) = 0;

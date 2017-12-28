@@ -18,7 +18,7 @@
 
 namespace QFlow{
 
-WampConnectionPrivate::WampConnectionPrivate(WampConnection* parent) : QObject(), _user(nullptr), q_ptr(parent)
+WampConnectionPrivate::WampConnectionPrivate(WampConnection* parent) : QObject(), q_ptr(parent)
 {
     _worker = new WampWorker();
     _worker->_socketPrivate = this;
@@ -107,26 +107,29 @@ void WampConnectionPrivate::handleEvent(const Event& event)
 void WampConnectionPrivate::onConnected()
 {
     Q_Q(WampConnection);
-
-    q->subscribe(KEY_SUBSCRIPTION_ON_CREATE, std::function<void(double, QVariantMap)>{
-                     [q, this](double, QVariantMap info){
-                         QString topicUri = info["uri"].toString();
-                         Q_EMIT q->subscriptionCreated(topicUri);
-                         if(!_topicObserver.contains(topicUri)) return;
-                         SignalObserverPointer so = _topicObserver[topicUri];
-                         so->setEnabled(true);
-                     }});
-    q->subscribe(KEY_SUBSCRIPTION_ON_DELETE, std::function<void(double, double, QString)>{
-                     [q, this](double, double, QString topic){
-                         Q_EMIT q->subscriptionDeleted(topic);
-                         if(!_topicObserver.contains(topic)) return;
-                         SignalObserverPointer so = _topicObserver[topic];
-                         so->setEnabled(false);
-                     }});
+    if (q->subscribeMeta)
+    {
+        q->subscribe(KEY_SUBSCRIPTION_ON_CREATE, std::function<void(double, QVariantMap)>{
+                         [q, this](double, QVariantMap info){
+                             QString topicUri = info["uri"].toString();
+                             Q_EMIT q->subscriptionCreated(topicUri);
+                             if(!_topicObserver.contains(topicUri)) return;
+                             SignalObserverPointer so = _topicObserver[topicUri];
+                             so->setEnabled(true);
+                         }});
+        q->subscribe(KEY_SUBSCRIPTION_ON_DELETE, std::function<void(double, QVariantMap)>{
+                         [q, this](double, QVariantMap info){
+                             QString topicUri = info["uri"].toString();
+                             Q_EMIT q->subscriptionDeleted(topicUri);
+                             if(!_topicObserver.contains(topicUri)) return;
+                             SignalObserverPointer so = _topicObserver[topicUri];
+                             so->setEnabled(false);
+                         }});
+    }
     Q_EMIT q->connected();
 }
 
-WampConnection::WampConnection(QObject* parent) : WampBase(parent), d_ptr(new WampConnectionPrivate(this))
+WampConnection::WampConnection(QObject* parent) : WampBase(parent), subscribeMeta(true), d_ptr(new WampConnectionPrivate(this))
 {
 
 }
@@ -164,7 +167,14 @@ void WampConnection::setUser(User* value)
 
 void WampConnection::connect()
 {
-    QMetaObject::invokeMethod(d_ptr->_worker, "connect", Qt::QueuedConnection);
+    if (d_ptr->_worker)
+        QMetaObject::invokeMethod(d_ptr->_worker, "connect", Qt::QueuedConnection);
+}
+
+void WampConnection::disconnect()
+{
+    if (d_ptr->_worker)
+        QMetaObject::invokeMethod(d_ptr->_worker, "disconnect", Qt::QueuedConnection);
 }
 
 void WampConnectionPrivate::addRegistration(RegistrationPointer reg)
@@ -243,6 +253,9 @@ Future WampConnection::call(QString uri, const QVariantList &args, QObject *call
 
 Future WampConnection::call2(QString uri, const QVariantList& args, ResultCallback callback, QVariantMap options)
 {
+    if (!d_ptr)
+	return Future();
+    
     Impl* impl = NULL;
     if(callback)
     {
@@ -258,7 +271,8 @@ void WampConnection::publish(QString uri, const QVariantList& args)
 {
     qulonglong requestId = Random::generate();
     QVariantList arr{(int)WampMsgCode::PUBLISH, requestId, QVariantMap(), uri, args};
-    d_ptr->sendWampMessage(arr);
+    if (d_ptr)
+    	d_ptr->sendWampMessage(arr);
 }
 void WampConnection::define(QString uri, QString definition)
 {
@@ -276,7 +290,7 @@ Future WampConnection::listRegistrations()
 {
     QVariantMap match;
     match["match"] = "prefix";
-    return call2("wamp.registration.list", QVariantList());
+    return call2("wamp.registration.list", QVariantList(), nullptr, match);
 }
 Future WampConnection::getSubscription(qulonglong subscriptionId)
 {

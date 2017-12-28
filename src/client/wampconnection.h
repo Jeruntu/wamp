@@ -47,8 +47,10 @@ public:
     void unregister(qulonglong registrationId);
     void unsubscribe(qulonglong subscriptionId);
     Future call2(QString uri, const QVariantList& args, ResultCallback callback = nullptr, QVariantMap options = QVariantMap());
+    bool subscribeMeta; // should subscriptions for meta events be made after connection is attempted
 public Q_SLOTS:
     void connect();
+	void disconnect();
     void subscribe(QString uri, QJSValue callback);
     void subscribe(QString uri, QObject* obj, QString method);
     void unregister(QString uri);

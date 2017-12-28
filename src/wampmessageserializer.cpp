@@ -6,6 +6,7 @@
 #include <sstream>
 #include <QDebug>
 #include <QDateTime>
+#include <QUrl>
 
 namespace msgpack {
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
@@ -58,6 +59,10 @@ struct pack<QVariant> {
         {
             QString utcStr = v.toDateTime().toUTC().toString(Qt::ISODate);
             o.pack(utcStr.toStdString());
+        }
+        else if ((QMetaType::Type)v.type() == QMetaType::QUrl)
+        {
+            o.pack(v.toUrl().toString().toStdString());
         }
         else if(v.canConvert<int>())
         {

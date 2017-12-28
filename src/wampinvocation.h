@@ -9,7 +9,7 @@ namespace QFlow{
 class Registration;
 typedef QSharedPointer<Registration> RegistrationPointer;
 
-class WampInvocation
+class WampInvocation : public QObject
 {
 public:
     RegistrationPointer registration;
@@ -22,6 +22,11 @@ public:
     ~WampInvocation()
     {
 
+    }
+};
+struct InvocationDeleter {
+    void operator()(WampInvocation* c) const {
+        c->deleteLater();
     }
 };
 typedef QSharedPointer<WampInvocation> WampInvocationPointer;

@@ -18,9 +18,10 @@ public:
     ~WampWorker();
     WampConnectionPrivate* _socketPrivate;
     QTimer* _timer;
-    std::unique_ptr<WebSocketConnection> _socket;
+    QScopedPointer<WebSocketConnection> _socket;
 public Q_SLOTS:
     void connect();
+    void disconnect();
     void messageReceived(const QByteArray & message);
     void opened();
     void closed();

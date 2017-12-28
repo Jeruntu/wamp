@@ -13,7 +13,7 @@
 
 namespace QFlow{
 
-class Subscription
+class Subscription : public QObject
 {
 protected:
     qulonglong _subscriptionId;

@@ -13,52 +13,102 @@
 #include <QCoreApplication>
 
 namespace QFlow{
+    
+const char* socketStateToString(QAbstractSocket::SocketState state) {
+    switch (state)
+    {
+        case QAbstractSocket::ConnectedState:
+            return "CONNECTED";
+        case QAbstractSocket::ConnectingState:
+            return "CONNECTING";
+        case QAbstractSocket::UnconnectedState:
+            return "UNCONNECTED";
+        case QAbstractSocket::HostLookupState:
+            return "HOSTLOOKUP";
+        case QAbstractSocket::BoundState:
+            return "BOUND";
+        case QAbstractSocket::ListeningState:
+            return "LISTENING";
+        case QAbstractSocket::ClosingState:
+            return "CLOSING";
+        default:
+            return "UNCONNECTED";
+    }
+}
 
 WampWorker::WampWorker() : QObject(), _timer(new QTimer(this))
 {
     _timer->setInterval(5000);
-    QObject::connect(_timer, SIGNAL(timeout()), this, SLOT(reconnect()));
+    QObject::connect(_timer, &QTimer::timeout, this, &WampWorker::reconnect);
 }
 WampWorker::~WampWorker()
 {
-    _timer->stop();
+    disconnect();
 }
 
 void WampWorker::reconnect()
 {
-    connect();
+    if (!_socket.isNull() && (_socket->state() == QAbstractSocket::ConnectedState ||  _socket->state() == QAbstractSocket::ConnectingState))
+    {
+        _socket->close();
+        connect();
+    }
 }
 
 void WampWorker::connect()
 {
+    _timer->stop();
     _socket.reset(new WebSocketConnection());
     _socket->setUri(_socketPrivate->_url.url());
-    _socket->setRequestedSubprotocols({KEY_WAMP_JSON_SUB, KEY_WAMP_MSGPACK_SUB});
-    QObject::connect(_socket.get(), SIGNAL(opened()), this, SLOT(opened()));
-    QObject::connect(_socket.get(), SIGNAL(closed()), this, SLOT(closed()));
-    QObject::connect(_socket.get(), SIGNAL(messageReceived(QByteArray)), this, SLOT(messageReceived(QByteArray)));
+    _socket->setRequestedSubprotocols({KEY_WAMP_MSGPACK_SUB, KEY_WAMP_JSON_SUB}); //prefer msgpack over json as it's faster
+    QObject::connect(_socket.data(), &WebSocketConnection::opened, this, &WampWorker::opened);
+    QObject::connect(_socket.data(), &WebSocketConnection::closed, this, &WampWorker::closed);
+    QObject::connect(_socket.data(), &WebSocketConnection::messageReceived, this, &WampWorker::messageReceived);
     _socket->connect();
+    _timer->start();
+}
+    
+void WampWorker::disconnect()
+{
+    if (!_socket.isNull())
+    {
+        _socket->close();
+        _socket.reset();
+    }
+    _timer->stop();
 }
 
 void WampWorker::sendTextMessage(const QString &message)
 {
-    _socket->sendText(message);
+    if (!_socket.isNull())
+        _socket->sendText(message);
+    else {
+        qWarning() << "Invalid socket state while attempting to send text message [" << message << "]";
+    }
 }
 void WampWorker::sendBinaryMessage(const QByteArray &message)
 {
-    return _socket->sendBinary(message);
+    if (!_socket.isNull())
+        _socket->sendBinary(message);
+    else
+        qWarning() << "Attempting to send binary message while socket to WAMP server is closed";
 }
 void WampWorker::closed()
 {
     qDebug() << "WampConnection: WebSocket closed";
-    for(auto observer: _socketPrivate->_topicObserver.values())
+    if (_socketPrivate)
+        for(auto observer: _socketPrivate->_topicObserver.values())
+        {
+            observer->setEnabled(false);
+        }
+    if (_socketPrivate->q_ptr)
     {
-        observer->setEnabled(false);
+        Q_EMIT _socketPrivate->q_ptr->disconnected();
     }
-    Q_EMIT _socketPrivate->q_ptr->disconnected();
-
-    _timer->start();
+    if (!_socket.isNull())
+        _timer->start();
 }
+    
 void WampWorker::flush()
 {
     QCoreApplication::processEvents();
@@ -95,6 +145,8 @@ void WampWorker::opened()
 }
 void WampWorker::messageReceived(const QByteArray &message)
 {
+    if (_socketPrivate->q_ptr)
+    {
     QVariantList arr = _socketPrivate->_serializer->deserialize(message);
     WampMsgCode code = (WampMsgCode)arr[0].toInt();
     if(code == WampMsgCode::ERROR)
@@ -179,7 +231,7 @@ void WampWorker::messageReceived(const QByteArray &message)
             args = arr[4].toList();
         }
 
-        WampInvocationPointer inv(new WampInvocation());
+        WampInvocationPointer inv(new WampInvocation(), InvocationDeleter());
         inv->registration = reg;
         inv->args = args;
         inv->requestId = arr[1].toULongLong();
@@ -224,12 +276,21 @@ void WampWorker::messageReceived(const QByteArray &message)
     else if(code == WampMsgCode::CHALLENGE)
     {
         QVariantMap extra = arr[2].toMap();
-        QByteArray challenge = extra["challenge"].toByteArray();
-        QByteArray result = _socketPrivate->_user->response(challenge);
-
+        QString result = QString(_socketPrivate->_user->response(extra["challenge"].toString().toLatin1()));
         QVariantList resArr{WampMsgCode::AUTHENTICATE, result, QVariantMap()};
         _socketPrivate->sendWampMessage(resArr);
     }
-    Q_EMIT _socketPrivate->q_ptr->textMessageReceived(message);
+    else if (code == WampMsgCode::GOODBYE)
+    {
+        QVariantMap details = arr[1].toMap();
+        QString reason = arr[2].toString();
+        qInfo() << "Received GOODBYE msg with reason: " << reason << " and details: " << details;
+        if (_socketPrivate->q_ptr)
+            Q_EMIT _socketPrivate->q_ptr->disconnected();
+        disconnect();
+    }
+    if (_socketPrivate->q_ptr)
+        Q_EMIT _socketPrivate->q_ptr->textMessageReceived(message);
+    }
 }
 }
