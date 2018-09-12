@@ -5,7 +5,7 @@
 #include <wincred.h>
 #endif
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #define SECRET_API_SUBJECT_TO_CHANGE
 #include <libsecret/secret.h>
 #endif
@@ -21,7 +21,7 @@ CredentialStore::~CredentialStore()
 
 }
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 GList* getItems(QString credential)
 {
     GError *error = NULL;
@@ -46,7 +46,7 @@ QString CredentialStore::readPassword(QUrl resource)
     if(ok) return QString((const QChar*)pcred->CredentialBlob);
     return QString();
 #endif
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     GList *items = getItems(resource.url());
     if(!items) return QString();
     GList* first = g_list_first (items);
@@ -65,6 +65,10 @@ QString CredentialStore::readPassword(QUrl resource)
 	Q_UNUSED(resource);
 	return QString(); // no implementation, just return nothing
 #endif
+#ifdef Q_OS_ANDROID
+    Q_UNUSED(resource);
+    return QString(); // no implementation, just return nothing
+#endif
 }
 QString CredentialStore::readUsername(QUrl resource)
 {
@@ -74,7 +78,7 @@ QString CredentialStore::readUsername(QUrl resource)
     if(ok) return QString((const QChar*)pcred->UserName);
     return QString();
 #endif
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     GList *items = getItems(resource.url());
     if(!items) return QString();
     GList* first = g_list_first (items);
@@ -89,6 +93,10 @@ QString CredentialStore::readUsername(QUrl resource)
 #ifdef Q_OS_MACOS
 	Q_UNUSED(resource);
 	return QString(); // no implementation, just return nothing
+#endif
+#ifdef Q_OS_ANDROID
+    Q_UNUSED(resource);
+    return QString(); // no implementation, just return nothing
 #endif
 }
 }

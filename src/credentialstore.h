@@ -10,7 +10,7 @@ class CredentialStore : public QObject
 {
     Q_OBJECT
 public:
-    explicit CredentialStore(QObject *parent = 0);
+    explicit CredentialStore(QObject *parent = nullptr);
     ~CredentialStore();
     QString readPassword(QUrl resource);
     QString readUsername(QUrl resource);
