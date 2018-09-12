@@ -10,8 +10,22 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_definitions(-DUNICODE)
 endif()
+
+# Find includes in corresponding build directories
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# Instruct CMake to run moc automatically when needed.
+set(CMAKE_AUTOMOC ON)
+
+file(GLOB_RECURSE DATABASE_SRCS
+         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+         ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+add_library(wamp SHARED ${DATABASE_SRCS} qmldir)
+set_property(TARGET wamp PROPERTY CXX_STANDARD 14)
+
 find_package(msgpack QUIET)
 if(msgpack_FOUND)
+    get_target_property(MSGPACK_INCLUDE_DIRS msgpackc INTERFACE_INCLUDE_DIRECTORIES)
 else()
     ExternalProject_Add(
       msgpack
@@ -28,16 +42,9 @@ else()
     )
     set(MSGPACK_INCLUDE_DIRS ${PROJECT_BINARY_DIR}/msgpack/src/msgpack/include)
     message(STATUS "MsgPack: " ${MSGPACK_INCLUDE_DIRS})
+    add_dependencies(wamp msgpack)
 endif()
-file(GLOB_RECURSE DATABASE_SRCS
-         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
-         ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 include_directories(./client ./router ${MSGPACK_INCLUDE_DIRS} ${LIBSECRET_INCLUDE_DIRS})
-# Find includes in corresponding build directories
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-# Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC ON)
 
 if(DEFINED QTDIR${_lib_suffix})
 	list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
@@ -52,12 +59,10 @@ endif()
 set(QT_MIN_VERSION "5.6.0")
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED Core Qml)
 
-add_library(wamp SHARED ${DATABASE_SRCS} qmldir)
 get_target_property(core_INCLUDE_DIRECTORIES core INCLUDE_DIRECTORIES)
 get_target_property(websockets_INCLUDE_DIRECTORIES websockets INCLUDE_DIRECTORIES)
 include_directories(${core_INCLUDE_DIRECTORIES} ${websockets_INCLUDE_DIRECTORIES})
-set_property(TARGET wamp PROPERTY CXX_STANDARD 14)
-add_dependencies(wamp core websockets msgpack)
+add_dependencies(wamp core websockets)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(ADDITIONAL_LIBS ${ADDITIONAL_LIBS} Advapi32 Secur32)
 endif()

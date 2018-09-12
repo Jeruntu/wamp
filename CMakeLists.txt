@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(wamp)
-set(CMAKE_PREFIX_PATH "$ENV{QTDIR}/lib/cmake")
-set(CMAKE_INSTALL_PREFIX "install")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 add_subdirectory(core/src)
 add_subdirectory(websockets/src)
