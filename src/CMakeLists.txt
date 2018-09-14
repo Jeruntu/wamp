@@ -71,5 +71,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 target_link_libraries(wamp core websockets Qt5::Core Qt5::Qml ${ADDITIONAL_LIBS})
 set(WAMP_INSTALL_PATH "plugins/QFlow/Wamp" CACHE PATH "qFlow Wamp Library Install Path")
-install (TARGETS wamp DESTINATION ${WAMP_INSTALL_PATH} COMPONENT qflow)
-install (FILES qmldir DESTINATION ${WAMP_INSTALL_PATH} COMPONENT qflow)
+
+if(WIN32)
+    install(TARGETS wamp
+        RUNTIME DESTINATION ${WAMP_INSTALL_PATH}
+        ARCHIVE DESTINATION lib
+        COMPONENT qflow)
+elseif()
+    install(TARGETS core DESTINATION ${WAMP_INSTALL_PATH} COMPONENT qflow)
+endif()
+install (FILES qmldir plugins.qmltypes DESTINATION ${WAMP_INSTALL_PATH} COMPONENT qflow)

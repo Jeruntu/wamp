@@ -1,2 +1,4 @@
 module QFlow.Wamp
 plugin wamp
+classname Wamp
+typeinfo plugins.qmltypes
