@@ -102,7 +102,7 @@ void WampConnectionPrivate::sendWampMessage(const QVariantList &arr)
 
 void WampConnectionPrivate::handleEvent(const Event& event)
 {
-    event.subscription->handle(event.args);
+    event.subscription->handle(event.args, event.kwargs, event.details);
 }
 void WampConnectionPrivate::onConnected()
 {

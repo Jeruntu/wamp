@@ -21,19 +21,9 @@ class Event
 public:
     SubscriptionPointer subscription;
     QVariantList args;
+    QVariantMap kwargs;
+    QVariantMap details;
     qulonglong publicationId;
-    Event() : subscription(NULL)
-    {
-
-    }
-    ~Event()
-    {
-
-    }
-    Event(const Event& other) : subscription(other.subscription), args(other.args), publicationId(other.publicationId)
-    {
-
-    }
 };
 
 class User;

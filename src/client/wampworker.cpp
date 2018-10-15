@@ -247,13 +247,25 @@ void WampWorker::messageReceived(const QByteArray &message)
         }
         SubscriptionPointer sub = _socketPrivate->_subscriptions[subId];
         QVariantList args;
+        QVariantMap kwargs;
+        QVariantMap details;
         if(arr.count() > 4 && (QMetaType::Type)arr[4].type() == QMetaType::QVariantList)
         {
             args = arr[4].toList();
         }
+        if(arr.count() > 5 && (QMetaType::Type)arr[5].type() == QMetaType::QVariantMap)
+        {
+            kwargs = arr[5].toMap();
+        }
+        if(arr.count() > 6 && (QMetaType::Type)arr[6].type() == QMetaType::QVariantMap)
+        {
+            details = arr[6].toMap();
+        }
         Event event;
         event.subscription = sub;
         event.args = args;
+        event.kwargs = kwargs;
+        event.details = details;
         event.publicationId = arr[2].toULongLong();
         QMetaObject::invokeMethod(_socketPrivate, "handleEvent", Qt::QueuedConnection, Q_ARG(Event, event));
 

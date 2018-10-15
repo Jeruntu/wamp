@@ -44,7 +44,7 @@ public:
     {
 
     }
-    virtual void handle(const QVariantList& args) = 0;
+    virtual void handle(const QVariantList& args, const QVariantMap& kwargs, const QVariantMap& details) = 0;
 };
 typedef QSharedPointer<Subscription> SubscriptionPointer;
 class JSSubscription : public Subscription
@@ -55,15 +55,15 @@ public:
     {
         Q_ASSERT(val.isCallable());
     }
-    void handle(const QVariantList& args) override
+    void handle(const QVariantList& args, const QVariantMap& kwargs, const QVariantMap& details) override
     {
         QJSValueList params;
-        for(QVariant val: args) {
-            QByteArray arr = val.toByteArray();
-            //QJSValue param = Helper::variantToJS(val, _callback.engine());
-            QJSValue param = _callback.engine()->toScriptValue(val);
-            params.append(param);
-        }
+        auto jsArgs = _callback.engine()->toScriptValue(args);
+        auto jsKwargs = _callback.engine()->toScriptValue(kwargs);
+        auto jsDetails = _callback.engine()->toScriptValue(details);
+        params.append(jsArgs);
+        params.append(jsKwargs);
+        params.append(jsDetails);
         _callback.call(params);
     }
 
@@ -77,22 +77,20 @@ class MethodSubscription : public Subscription
     QObject* _obj;
     QString _method;
     QMetaMethod _metaMethod;
+
 public:
     MethodSubscription(QString uri, QObject* obj, QString method) : Subscription(uri), _obj(obj), _method(method)
     {
         int index = _obj->metaObject()->indexOfSlot(method.toLatin1());
         _metaMethod = _obj->metaObject()->method(index);
     }
-    void handle(const QVariantList& args) override
+
+    void handle(const QVariantList& args, const QVariantMap& kwargs, const QVariantMap& details) override
     {
-        QGenericArgument genArgs[10];
-        for(int i=0; i<args.count(); i++)
-        {
-            QGenericArgument genArg(args[i].typeName(), args[i].constData());
-            genArgs[i] = genArg;
-        }
-        _metaMethod.invoke(_obj, Qt::AutoConnection, genArgs[0], genArgs[1], genArgs[2], genArgs[3],
-                genArgs[4], genArgs[5], genArgs[6], genArgs[7], genArgs[8], genArgs[9]);
+        QGenericArgument genArgs{QMetaType::typeName(QMetaType::QVariantList), &args};
+        QGenericArgument genKwargs{QMetaType::typeName(QMetaType::QVariantMap), &kwargs};
+        QGenericArgument genDetails{QMetaType::typeName(QMetaType::QVariantMap), &details};
+        _metaMethod.invoke(_obj, Qt::AutoConnection, genArgs, genKwargs, genDetails);
     }
 };
 
@@ -108,9 +106,9 @@ public:
     {
 
     }
-    void handle(const QVariantList& args) override
+    void handle(const QVariantList& args, const QVariantMap& kwargs, const QVariantMap& details) override
     {
-        _functor->invoke(args);
+//        _functor->invoke(args, kwargs, details); // [JJO] To be continued
     }
 
 };
