@@ -267,10 +267,10 @@ Future WampConnection::call2(QString uri, const QVariantList& args, ResultCallba
     return call->getFuture();
 }
 
-void WampConnection::publish(QString uri, const QVariantList& args)
+void WampConnection::publish(QString uri, const QVariantList& args, const QVariantMap& kwargs)
 {
     qulonglong requestId = Random::generate();
-    QVariantList arr{(int)WampMsgCode::PUBLISH, requestId, QVariantMap(), uri, args};
+    QVariantList arr{(int)WampMsgCode::PUBLISH, requestId, QVariantMap(), uri, args, kwargs};
     if (d_ptr)
     	d_ptr->sendWampMessage(arr);
 }
@@ -328,8 +328,9 @@ void WampConnection::addSignalObserver(QString uri, SignalObserverPointer observ
         int count = result.toInt();
         observer->setEnabled(count > 0);
     });
-    QObject::connect(observer.get(), &SignalObserver::signalEmitted, [this, uri](QVariantList args){
-        publish(uri, args);
+    QObject::connect(observer.get(), &SignalObserver::signalEmitted, [this, uri](QVariantList args) {
+        QVariantMap kwargs;
+        publish(uri, args, kwargs);
     });
 }
 }

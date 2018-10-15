@@ -59,7 +59,7 @@ public Q_SLOTS:
     Future listRegistrations();
     Future getSubscription(qulonglong subscriptionId);
     Future subscribersCount(QString topicUri, ResultCallback callback = nullptr);
-    void publish(QString uri, const QVariantList& args);
+    void publish(QString uri, const QVariantList& args, const QVariantMap& kwargs);
     Future call(QString uri, const QVariantList& args, const QJSValue& callback = QJSValue(), QVariantMap options = QVariantMap());
     Future call(QString uri, const QVariantList& args, QObject* callbackObj, QString callbackMethod, QVariantMap options = QVariantMap());
     void define(QString uri, QString definition);
